@@ -23,7 +23,7 @@ from six.moves import cStringIO as StringIO
 import psutil
 import pynvml as N
 from blessings import Terminal
-
+import subprocess
 NOT_SUPPORTED = 'Not Supported'
 MB = 1024 * 1024
 
@@ -282,7 +282,11 @@ class GPUStatCollection(object):
                 # Bytes to MBytes
                 process['gpu_memory_usage'] = nv_process.usedGpuMemory // MB
                 process['pid'] = nv_process.pid
-                return process
+                if process['username'] == 'root':	
+			out=subprocess.check_output('docker inspect --format "{{.Name}}" "$(cat /proc/'+str(process['pid'])+'/cgroup |head -n 1 |cut -d / -f 3)" | sed "s/^\///"',shell= "True")
+			if "Error" not in out:
+				process['username']=out
+		return process
 
             def _decode(b):
                 if isinstance(b, bytes):
